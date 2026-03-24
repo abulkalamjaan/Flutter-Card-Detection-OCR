@@ -67,6 +67,92 @@ class _ShimmerWidgetState extends State<ShimmerWidget>
   }
 }
 
+class LaserScannerAnimation extends StatefulWidget {
+  final double width;
+  final double height;
+
+  const LaserScannerAnimation({
+    super.key,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  State<LaserScannerAnimation> createState() => _LaserScannerAnimationState();
+}
+
+class _LaserScannerAnimationState extends State<LaserScannerAnimation>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _animation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutSine),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            Container(
+              width: widget.width,
+              height: widget.height,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.indigo.withOpacity(0.3),
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            Positioned(
+              top: widget.height * _animation.value,
+              child: Container(
+                width: widget.width,
+                height: 4,
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.indigo.withOpacity(0.6),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.indigo.withOpacity(0.0),
+                      Colors.indigo,
+                      Colors.indigo.withOpacity(0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class InstructionAnimation extends StatelessWidget {
   final bool isFront;
   const InstructionAnimation({super.key, required this.isFront});

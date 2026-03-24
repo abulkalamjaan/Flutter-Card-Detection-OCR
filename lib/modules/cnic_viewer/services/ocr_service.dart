@@ -24,14 +24,12 @@ class OcrService {
         ? _extractFrontData(mlKitLines)
         : _extractBackData(mlKitLines);
 
-    // 2. Fallback to Tesseract if Urdu/Sindhi script fields are missing
+    // 2. Fallback to Tesseract if Urdu/Sindhi script fields are missing or garbage
     bool needsFallback = false;
     if (isFront) {
-      needsFallback =
-          (model.name == null || model.name!.isEmpty) ||
-          (model.fatherName == null || model.fatherName!.isEmpty);
+      needsFallback = _isGarbage(model.name) || _isGarbage(model.fatherName);
     } else {
-      needsFallback = (model.address == null || model.address!.isEmpty);
+      needsFallback = _isGarbage(model.address);
     }
 
     if (needsFallback) {
@@ -50,6 +48,8 @@ class OcrService {
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty)
             .toList();
+
+        print('DEBUG: Tesseract raw lines: $tesseractLines');
 
         final tesseractModel = isFront
             ? _extractFrontData(tesseractLines)
@@ -71,6 +71,10 @@ class OcrService {
         model.cnicNumber ??= tesseractModel.cnicNumber;
         model.dob ??= tesseractModel.dob;
         model.expiry ??= tesseractModel.expiry;
+
+        print(
+          'DEBUG: Merged Model: ${model.cnicNumber}, ${model.name}, ${model.dob}',
+        );
       } catch (e) {
         print('Error: Tesseract fallback failed: $e');
       }
@@ -92,8 +96,10 @@ class OcrService {
   }
 
   bool isFrontSide(List<String> lines) {
-    final cnicRegex = RegExp(r"\d{5}[-\s]?\d{7}[-\s]?\d{1}");
-    final dateRegex = RegExp(r"\d{2}[-/\.]\d{2}[-/\.]\d{4}");
+    final cnicRegex = RegExp(r"[0-9۰-۹]{5}[-\s]?[0-9۰-۹]{7}[-\s]?[0-9۰-۹]{1}");
+    final dateRegex = RegExp(
+      r"[0-9۰-۹]{2}\s?[-/\.]\s?[0-9۰-۹]{2}\s?[-/\.]\s?[0-9۰-۹]{4}",
+    );
 
     int dateCount = 0;
     print('OCR lines detected: $lines');
@@ -136,11 +142,20 @@ class OcrService {
   CnicModel _extractFrontData(List<String> lines) {
     CnicModel model = CnicModel();
 
-    final cnicRegex = RegExp(r"\d{5}[-\s]?\d{7}[-\s]?\d{1}");
-    final dateRegex = RegExp(r"\d{2}[-/\.]\d{2}[-/\.]\d{4}");
+    final cnicRegex = RegExp(r"[0-9۰-۹]{5}[-\s]?[0-9۰-۹]{7}[-\s]?[0-9۰-۹]{1}");
+    final dateRegex = RegExp(
+      r"[0-9۰-۹]{2}\s?[-/\.]\s?[0-9۰-۹]{2}\s?[-/\.]\s?[0-9۰-۹]{4}",
+    );
 
     // Improved Name extraction regex
-    final nameLabels = ['name', 'full name', 'نام', 'full narne', 'narne'];
+    final nameLabels = [
+      'name',
+      'full name',
+      'نام',
+      'نالو',
+      'full narne',
+      'narne',
+    ];
     final fatherLabels = [
       'father name',
       'father narne',
@@ -151,6 +166,7 @@ class OcrService {
       'ولدیت', // Father Name (Urdu)
       'شوهر جو نالو', // Father/Husband Name (Sindhi)
       'پيءُ جو نالو', // Father Name (Sindhi)
+      'مڑس جو نالو', // Husband Name (Sindhi)
       'شور كانام', //Husband Name (Urdu),
       'والد کا نام', //Father Name (Urdu),
     ];
@@ -171,11 +187,21 @@ class OcrService {
       }
 
       // Extract Dates
-      if (dateRegex.hasMatch(lines[i])) {
-        if (line.contains('birth') || line.contains('پیدائش')) {
+      if (line.contains('birth') ||
+          line.contains('پیدائش') ||
+          line.contains('ڄمڻ')) {
+        if (dateRegex.hasMatch(lines[i])) {
           model.dob = dateRegex.stringMatch(lines[i]);
-        } else if (line.contains('expiry') || line.contains('تِخْ')) {
+        } else if (i + 1 < lines.length && dateRegex.hasMatch(lines[i + 1])) {
+          model.dob = dateRegex.stringMatch(lines[i + 1]);
+        }
+      } else if (line.contains('expiry') ||
+          line.contains('تِخْ') ||
+          line.contains('ختم')) {
+        if (dateRegex.hasMatch(lines[i])) {
           model.expiry = dateRegex.stringMatch(lines[i]);
+        } else if (i + 1 < lines.length && dateRegex.hasMatch(lines[i + 1])) {
+          model.expiry = dateRegex.stringMatch(lines[i + 1]);
         }
       }
 
@@ -228,7 +254,9 @@ class OcrService {
 
   CnicModel _extractBackData(List<String> lines) {
     CnicModel model = CnicModel();
-    final dateRegex = RegExp(r"\d{2}[-/\.]\d{2}[-/\.]\d{4}");
+    final dateRegex = RegExp(
+      r"[0-9۰-۹]{2}\s?[-/\.]\s?[0-9۰-۹]{2}\s?[-/\.]\s?[0-9۰-۹]{4}",
+    );
 
     // Labels for Address in English, Urdu, and Sindhi
     final addressLabels = [
@@ -301,6 +329,13 @@ class OcrService {
     }
 
     return model;
+  }
+
+  bool _isGarbage(String? text) {
+    if (text == null || text.trim().isEmpty) return true;
+    // Remove symbols and see if anything substantial remains
+    final clean = text.replaceAll(RegExp(r'[^\w\s\u0600-\u06FF]'), '').trim();
+    return clean.isEmpty || clean.length < 2;
   }
 
   void dispose() {

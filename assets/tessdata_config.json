@@ -1,5 +1,7 @@
-[
-  "urd.traineddata",
-  "snd.traineddata",
-  "eng.traineddata"
-]
+{
+  "files": [
+    "urd.traineddata",
+    "snd.traineddata",
+    "eng.traineddata"
+  ]
+}

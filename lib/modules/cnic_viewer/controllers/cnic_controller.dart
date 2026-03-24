@@ -11,8 +11,8 @@ class CnicController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString frontImagePath = ''.obs;
   final RxString backImagePath = ''.obs;
-  final RxInt scanStep = 0
-      .obs; // 0: Idle/Initial, 1: Scanning Front, 2: Scanning Back, 3: Completed
+  // 0: Initial, 1: Front Instr, 2: Front Extracting, 3: Back Instr, 4: Back Extracting, 5: Form
+  final RxInt scanStep = 0.obs;
 
   @override
   void onClose() {
@@ -22,43 +22,46 @@ class CnicController extends GetxController {
   }
 
   Future<void> startGuidedScan() async {
-    // 1. Scan Front
+    // 1. Instruction Front
     scanStep.value = 1;
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Trigger Scan Front
     bool frontSuccess = await _processStep(isFront: true);
     if (!frontSuccess) {
       scanStep.value = 0;
       return;
     }
 
-    // 2. Scan Back
-    scanStep.value = 2;
-    // Small delay/instruction pause
-    await Future.delayed(const Duration(seconds: 1));
+    // 2. Instruction Back
+    scanStep.value = 3;
+    await Future.delayed(
+      const Duration(milliseconds: 1500),
+    ); // Time to see "Back" instruction
 
+    // Trigger Scan Back
     bool backSuccess = await _processStep(isFront: false);
     if (!backSuccess) {
-      // Stay on back step to allow retry
       return;
     }
 
-    // 3. Complete
-    scanStep.value = 3;
-    Get.snackbar('Success', 'Both sides scanned successfully!');
+    // 3. Complete -> Show Form
+    scanStep.value = 5;
+    Get.snackbar('Success', 'Extraction completed!');
   }
 
   Future<bool> _processStep({required bool isFront}) async {
     final path = await _scannerService.scanDocument();
     if (path == null) return false;
 
+    // Set to extracting state
+    scanStep.value = isFront ? 2 : 4;
     isLoading.value = true;
-    try {
-      final detectedFront = await _ocrService.isFrontSideImage(path);
-      if (isFront && !detectedFront) {
-        Get.snackbar('Note', 'This might be the back side.');
-      } else if (!isFront && detectedFront) {
-        Get.snackbar('Note', 'This might be the front side.');
-      }
 
+    // Simulate some "cool" processing time for animation
+    await Future.delayed(const Duration(seconds: 2));
+
+    try {
       if (isFront) {
         frontImagePath.value = path;
       } else {
@@ -79,17 +82,11 @@ class CnicController extends GetxController {
     }
   }
 
-  // Keep these for manual trigger if needed, but update to use scanStep
-  Future<void> scanFront() async {
-    if (await _processStep(isFront: true)) {
-      if (scanStep.value == 0) scanStep.value = 1;
-    }
-  }
-
-  Future<void> scanBack() async {
-    if (await _processStep(isFront: false)) {
-      scanStep.value = 3;
-    }
+  void reset() {
+    scanStep.value = 0;
+    frontImagePath.value = '';
+    backImagePath.value = '';
+    cnicModel.value = CnicModel();
   }
 
   void _updateModel(CnicModel newData) {

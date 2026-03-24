@@ -19,15 +19,15 @@ The project follows a modular directory structure as per the `Patterns.md` rule:
 
 ### State Management
 The app uses **GetX** for reactive state management.
-- `CnicController` (`lib/modules/cnic_viewer/controllers/cnic_controller.dart`) manages the `CnicModel` state, loading indicators, image paths, and the `scanStep` (guided flow state).
-- Components listen to changes using `Obx`.
+- `CnicController` (`lib/modules/cnic_viewer/controllers/cnic_controller.dart`) manages the `CnicModel` state, loading indicators, image paths, and the `scanStep` micro-states (0-5). 
+- Components listen to changes using `Obx` and transitions are managed via `AnimatedSwitcher`.
 
-### Guided Scanning Process
-The `startGuidedScan` method in the controller orchestrates the following:
-1. **Front Side Scan:** Prompts the user and waits for the front side image.
-2. **Back Side Scan:** Automatically prompts for the back side after the front is processed.
-3. **Data Extraction:** Processes both images using the dual-engine strategy.
-4. **Result Presentation:** Displays the final extracted data in a confirmed form.
+### Immersive Scanning Process
+The `startGuidedScan` method in the controller orchestrates a seamless flow:
+1. **Welcome State:** User starts the process with a single button.
+2. **Instruction States:** Automated prompts for Front and Back sides using `ShimmerWidget`.
+3. **Extraction States:** Real-time "Laser Scan" animations over the captured images while OCR runs.
+4. **Final Result:** Direct transition to the verified data form.
 
 ### Scanning Mode
 - **ScannerMode.base:** The application uses the `base` mode to provide a clean scanning experience without additional filtering or grayscale screens, returning the original image for processing.

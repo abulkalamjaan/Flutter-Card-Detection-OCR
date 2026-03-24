@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 
 class ScannerService {
@@ -7,7 +6,7 @@ class ScannerService {
   ScannerService() {
     _documentScanner = DocumentScanner(
       options: DocumentScannerOptions(
-        documentFormat: DocumentFormat.jpeg,
+        documentFormats: {DocumentFormat.jpeg},
         mode: ScannerMode.base,
         isGalleryImport: true,
         pageLimit: 1,
@@ -18,11 +17,12 @@ class ScannerService {
   Future<String?> scanDocument() async {
     try {
       final result = await _documentScanner.scanDocument();
-      if (result.images.isNotEmpty) {
-        return result.images.first;
+      final images = result.images;
+      if (images != null && images.isNotEmpty) {
+        return images.first;
       }
     } catch (e) {
-      print('Error scanning document: $e');
+      // Handle error
     }
     return null;
   }

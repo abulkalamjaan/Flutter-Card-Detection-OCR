@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/cnic_controller.dart';
@@ -6,6 +5,8 @@ import '../widgets/shimmer_widget.dart';
 
 class CnicScannerScreen extends StatelessWidget {
   final CnicController controller = Get.put(CnicController());
+
+  CnicScannerScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,124 +24,151 @@ class CnicScannerScreen extends StatelessWidget {
         ),
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (controller.scanStep.value == 0) ...[
-                _buildStartButton(),
-              ] else if (controller.scanStep.value < 3) ...[
-                _buildGuidedInstruction(),
-                const SizedBox(height: 24),
-              ],
-              if (controller.scanStep.value == 3) ...[
-                const Text(
-                  'Extracted Information',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Divider(),
-                _buildResultForm(),
-                const SizedBox(height: 32),
-                _buildSaveButton(),
-                const SizedBox(height: 16),
-                _buildResetButton(),
-              ],
-            ],
-          ),
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          child: _buildCurrentStep(),
         );
       }),
     );
   }
 
-  Widget _buildStartButton() {
-    return Column(
-      children: [
-        const SizedBox(height: 40),
-        const Icon(Icons.document_scanner, size: 80, color: Colors.indigo),
-        const SizedBox(height: 24),
-        const Text(
-          'Ready to scan your CNIC?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'We will scan both sides in one sequence.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey),
-        ),
-        const SizedBox(height: 48),
-        ElevatedButton(
-          onPressed: controller.startGuidedScan,
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-            backgroundColor: Colors.indigo,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const Text(
-            'Start Guided Scan',
-            style: TextStyle(fontSize: 18),
-          ),
-        ),
-      ],
-    );
+  Widget _buildCurrentStep() {
+    switch (controller.scanStep.value) {
+      case 0:
+        return _buildStartView();
+      case 1:
+        return _buildInstructionView(isFront: true);
+      case 2:
+        return _buildExtractingView(isFront: true);
+      case 3:
+        return _buildInstructionView(isFront: false);
+      case 4:
+        return _buildExtractingView(isFront: false);
+      case 5:
+        return _buildResultView();
+      default:
+        return _buildStartView();
+    }
   }
 
-  Widget _buildGuidedInstruction() {
+  Widget _buildStartView() {
     return Center(
+      key: const ValueKey('start'),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 40),
-          InstructionAnimation(isFront: controller.scanStep.value == 1),
-          const SizedBox(height: 40),
-          if (controller.isLoading.value) ...[
-            const CircularProgressIndicator(),
-          ] else ...[
-            TextButton.icon(
-              onPressed: controller.scanStep.value == 1
-                  ? controller.scanFront
-                  : controller.scanBack,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry Current Side'),
+          const Icon(Icons.document_scanner, size: 80, color: Colors.indigo),
+          const SizedBox(height: 24),
+          const Text(
+            'Ready to scan your CNIC?',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'We will scan both sides in one sequence.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 48),
+          ElevatedButton(
+            onPressed: controller.startGuidedScan,
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+              backgroundColor: Colors.indigo,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              elevation: 8,
             ),
-          ],
+            child: const Text('Start Scanning', style: TextStyle(fontSize: 18)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSaveButton() {
-    return ElevatedButton(
-      onPressed: () {
-        Get.snackbar('Success', 'Data saved successfully!');
-      },
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
-      ),
-      child: const Text('Save Data'),
+  Widget _buildInstructionView({required bool isFront}) {
+    return Center(
+      key: ValueKey('instr_$isFront'),
+      child: InstructionAnimation(isFront: isFront),
     );
   }
 
-  Widget _buildResetButton() {
-    return OutlinedButton(
-      onPressed: () {
-        controller.scanStep.value = 0;
-        // Optionally clear data
-      },
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+  Widget _buildExtractingView({required bool isFront}) {
+    return Center(
+      key: ValueKey('extract_$isFront'),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              const LaserScannerAnimation(width: 280, height: 180),
+              const Icon(Icons.psychology, size: 48, color: Colors.indigo),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Extracting Details...',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.indigo,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Please wait while we process the image',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
       ),
-      child: const Text('Scan Another Card'),
+    );
+  }
+
+  Widget _buildResultView() {
+    return SingleChildScrollView(
+      key: const ValueKey('result'),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Extracted Information',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Please verify and edit if necessary',
+            style: TextStyle(color: Colors.grey),
+          ),
+          const Divider(height: 32),
+          _buildResultForm(),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            onPressed: () {
+              Get.snackbar('Success', 'Data saved successfully!');
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: Colors.indigo,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Save Data'),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: controller.reset,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              side: const BorderSide(color: Colors.indigo),
+            ),
+            child: const Text('Scan Another Card'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -193,9 +221,7 @@ class CnicScannerScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
         initialValue: initialValue,
-        key: Key(
-          '${label}_$initialValue',
-        ), // Force rebuild when initialValue changes
+        key: Key('${label}_$initialValue'),
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
