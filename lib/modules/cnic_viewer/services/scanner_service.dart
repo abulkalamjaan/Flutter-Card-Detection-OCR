@@ -8,7 +8,7 @@ class ScannerService {
     _documentScanner = DocumentScanner(
       options: DocumentScannerOptions(
         documentFormat: DocumentFormat.jpeg,
-        mode: ScannerMode.full,
+        mode: ScannerMode.base,
         isGalleryImport: true,
         pageLimit: 1,
       ),

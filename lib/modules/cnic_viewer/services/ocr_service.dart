@@ -92,7 +92,7 @@ class OcrService {
   }
 
   bool isFrontSide(List<String> lines) {
-    final cnicRegex = RegExp(r"\d{5}-\d{7}-\d{1}");
+    final cnicRegex = RegExp(r"\d{5}[-\s]?\d{7}[-\s]?\d{1}");
     final dateRegex = RegExp(r"\d{2}[-/\.]\d{2}[-/\.]\d{4}");
 
     int dateCount = 0;
@@ -136,15 +136,17 @@ class OcrService {
   CnicModel _extractFrontData(List<String> lines) {
     CnicModel model = CnicModel();
 
-    final cnicRegex = RegExp(r"\d{5}-\d{7}-\d{1}");
+    final cnicRegex = RegExp(r"\d{5}[-\s]?\d{7}[-\s]?\d{1}");
     final dateRegex = RegExp(r"\d{2}[-/\.]\d{2}[-/\.]\d{4}");
 
     // Improved Name extraction regex
-    final nameLabels = ['name', 'full name', 'نام'];
+    final nameLabels = ['name', 'full name', 'نام', 'full narne', 'narne'];
     final fatherLabels = [
       'father name',
+      'father narne',
       'father\'s name',
       'husband name',
+      'husband narne',
       'husband\'s name',
       'ولدیت', // Father Name (Urdu)
       'شوهر جو نالو', // Father/Husband Name (Sindhi)
@@ -156,9 +158,16 @@ class OcrService {
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i].toLowerCase();
 
-      // Extract CNIC
       if (cnicRegex.hasMatch(lines[i])) {
-        model.cnicNumber = cnicRegex.stringMatch(lines[i]);
+        String match = cnicRegex.stringMatch(lines[i])!;
+        // Normalize: Ensure it has hyphens for consistency in the model
+        match = match.replaceAll(RegExp(r"[-\s]"), "");
+        if (match.length == 13) {
+          model.cnicNumber =
+              "${match.substring(0, 5)}-${match.substring(5, 12)}-${match.substring(12, 13)}";
+        } else {
+          model.cnicNumber = match;
+        }
       }
 
       // Extract Dates

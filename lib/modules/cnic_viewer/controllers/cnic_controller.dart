@@ -11,6 +11,8 @@ class CnicController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString frontImagePath = ''.obs;
   final RxString backImagePath = ''.obs;
+  final RxInt scanStep = 0
+      .obs; // 0: Idle/Initial, 1: Scanning Front, 2: Scanning Back, 3: Completed
 
   @override
   void onClose() {
@@ -19,57 +21,74 @@ class CnicController extends GetxController {
     super.onClose();
   }
 
-  Future<void> scanFront() async {
-    final path = await _scannerService.scanDocument();
-    if (path != null) {
-      isLoading.value = true;
-      try {
-        final isFront = await _ocrService.isFrontSideImage(path);
-        if (!isFront) {
-          Get.snackbar(
-            'Note',
-            'This might be the back side, check the results.',
-          );
-        }
+  Future<void> startGuidedScan() async {
+    // 1. Scan Front
+    scanStep.value = 1;
+    bool frontSuccess = await _processStep(isFront: true);
+    if (!frontSuccess) {
+      scanStep.value = 0;
+      return;
+    }
 
-        frontImagePath.value = path;
-        final recognizedText = await _ocrService.processImage(
-          path,
-          isFront: true,
-        );
-        _updateModel(recognizedText);
-      } catch (e) {
-        Get.snackbar('Error', 'Failed to process front image: $e');
-      } finally {
-        isLoading.value = false;
+    // 2. Scan Back
+    scanStep.value = 2;
+    // Small delay/instruction pause
+    await Future.delayed(const Duration(seconds: 1));
+
+    bool backSuccess = await _processStep(isFront: false);
+    if (!backSuccess) {
+      // Stay on back step to allow retry
+      return;
+    }
+
+    // 3. Complete
+    scanStep.value = 3;
+    Get.snackbar('Success', 'Both sides scanned successfully!');
+  }
+
+  Future<bool> _processStep({required bool isFront}) async {
+    final path = await _scannerService.scanDocument();
+    if (path == null) return false;
+
+    isLoading.value = true;
+    try {
+      final detectedFront = await _ocrService.isFrontSideImage(path);
+      if (isFront && !detectedFront) {
+        Get.snackbar('Note', 'This might be the back side.');
+      } else if (!isFront && detectedFront) {
+        Get.snackbar('Note', 'This might be the front side.');
       }
+
+      if (isFront) {
+        frontImagePath.value = path;
+      } else {
+        backImagePath.value = path;
+      }
+
+      final extractedData = await _ocrService.processImage(
+        path,
+        isFront: isFront,
+      );
+      _updateModel(extractedData);
+      return true;
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to process image: $e');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Keep these for manual trigger if needed, but update to use scanStep
+  Future<void> scanFront() async {
+    if (await _processStep(isFront: true)) {
+      if (scanStep.value == 0) scanStep.value = 1;
     }
   }
 
   Future<void> scanBack() async {
-    final path = await _scannerService.scanDocument();
-    if (path != null) {
-      isLoading.value = true;
-      try {
-        final isFront = await _ocrService.isFrontSideImage(path);
-        if (isFront) {
-          Get.snackbar(
-            'Note',
-            'This might be the front side, check the results.',
-          );
-        }
-
-        backImagePath.value = path;
-        final extractedData = await _ocrService.processImage(
-          path,
-          isFront: false,
-        );
-        _updateModel(extractedData);
-      } catch (e) {
-        Get.snackbar('Error', 'Failed to process back image: $e');
-      } finally {
-        isLoading.value = false;
-      }
+    if (await _processStep(isFront: false)) {
+      scanStep.value = 3;
     }
   }
 

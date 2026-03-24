@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/cnic_controller.dart';
+import '../widgets/shimmer_widget.dart';
 
 class CnicScannerScreen extends StatelessWidget {
   final CnicController controller = Get.put(CnicController());
@@ -31,28 +32,24 @@ class CnicScannerScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildScanButtons(),
-              const SizedBox(height: 24),
-              _buildImagePreviews(),
-              const SizedBox(height: 24),
-              const Text(
-                'Extracted Information',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const Divider(),
-              _buildResultForm(),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  Get.snackbar('Success', 'Data saved successfully!');
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.indigo,
-                  foregroundColor: Colors.white,
+              if (controller.scanStep.value == 0) ...[
+                _buildStartButton(),
+              ] else if (controller.scanStep.value < 3) ...[
+                _buildGuidedInstruction(),
+                const SizedBox(height: 24),
+              ],
+              if (controller.scanStep.value == 3) ...[
+                const Text(
+                  'Extracted Information',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                child: const Text('Save Data'),
-              ),
+                const Divider(),
+                _buildResultForm(),
+                const SizedBox(height: 32),
+                _buildSaveButton(),
+                const SizedBox(height: 16),
+                _buildResetButton(),
+              ],
             ],
           ),
         );
@@ -60,87 +57,90 @@ class CnicScannerScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScanButtons() {
-    return Row(
+  Widget _buildStartButton() {
+    return Column(
       children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: controller.scanFront,
-            icon: const Icon(Icons.camera_front),
-            label: const Text('Scan Front'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue[100]),
-          ),
+        const SizedBox(height: 40),
+        const Icon(Icons.document_scanner, size: 80, color: Colors.indigo),
+        const SizedBox(height: 24),
+        const Text(
+          'Ready to scan your CNIC?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: controller.scanBack,
-            icon: const Icon(Icons.camera_rear),
-            label: const Text('Scan Back'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue[100]),
+        const SizedBox(height: 8),
+        const Text(
+          'We will scan both sides in one sequence.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey),
+        ),
+        const SizedBox(height: 48),
+        ElevatedButton(
+          onPressed: controller.startGuidedScan,
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+            backgroundColor: Colors.indigo,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+          ),
+          child: const Text(
+            'Start Guided Scan',
+            style: TextStyle(fontSize: 18),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildImagePreviews() {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              const Text('Front Side'),
-              const SizedBox(height: 8),
-              Container(
-                height: 120,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: controller.frontImagePath.value.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          File(controller.frontImagePath.value),
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : const Center(
-                        child: Icon(Icons.image, size: 40, color: Colors.grey),
-                      ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            children: [
-              const Text('Back Side'),
-              const SizedBox(height: 8),
-              Container(
-                height: 120,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: controller.backImagePath.value.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          File(controller.backImagePath.value),
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : const Center(
-                        child: Icon(Icons.image, size: 40, color: Colors.grey),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ],
+  Widget _buildGuidedInstruction() {
+    return Center(
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          InstructionAnimation(isFront: controller.scanStep.value == 1),
+          const SizedBox(height: 40),
+          if (controller.isLoading.value) ...[
+            const CircularProgressIndicator(),
+          ] else ...[
+            TextButton.icon(
+              onPressed: controller.scanStep.value == 1
+                  ? controller.scanFront
+                  : controller.scanBack,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry Current Side'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return ElevatedButton(
+      onPressed: () {
+        Get.snackbar('Success', 'Data saved successfully!');
+      },
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+      ),
+      child: const Text('Save Data'),
+    );
+  }
+
+  Widget _buildResetButton() {
+    return OutlinedButton(
+      onPressed: () {
+        controller.scanStep.value = 0;
+        // Optionally clear data
+      },
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+      child: const Text('Scan Another Card'),
     );
   }
 
