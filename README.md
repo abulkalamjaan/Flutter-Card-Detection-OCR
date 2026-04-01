@@ -12,7 +12,10 @@ This plugin combines the power of **Google ML Kit** for fast document detection 
 - **Hybrid OCR Engine**:
   - **Google ML Kit**: High-speed extraction for English names, CNIC numbers, and dates.
   - **Tesseract fallback**: Specialized support for Urdu and Sindhi script extraction (names, addresses).
-- **Comprehensive Data Model**: Extracts and maps data to a structured `CnicModel` (Name, Father's Name, CNIC Number, Date of Birth, Expiry Date, and Address).
+- **Advanced Data Extraction**: 
+  - Extracts Name, Father's Name, CNIC Number, and Date of Birth.
+  - Supports **Gender** extraction with normalization (`M`/`F`, `Male`/`Female`, Urdu/Sindhi words).
+  - Handles **Date of Issue** and **Date of Expiry** with specialized labels (e.g., "Valid Upto").
 - **Customizable UI Flow**: Easy-to-integrate services that can fit any design language.
 - **Micro-Animations**: Built-in support for scanning animations and loaders.
 
@@ -87,7 +90,9 @@ The `CnicModel` contains the following fields:
 - `name`: Full name of the individual.
 - `fatherName`: Father's or Husband's name.
 - `cnicNumber`: 13-digit identity number.
+- `gender`: Normalized Gender ("Male" or "Female").
 - `dob`: Date of Birth.
+- `issueDate`: Date of card issue.
 - `expiry`: Card expiry date.
 - `address`: Residential address (typically from the back side).
 
