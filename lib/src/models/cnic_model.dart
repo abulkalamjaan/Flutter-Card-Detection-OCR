@@ -4,6 +4,8 @@ class CnicModel {
   String? cnicNumber;
   String? dob;
   String? expiry;
+  String? issueDate;
+  String? gender;
   String? address;
 
   CnicModel({
@@ -12,6 +14,8 @@ class CnicModel {
     this.cnicNumber,
     this.dob,
     this.expiry,
+    this.issueDate,
+    this.gender,
     this.address,
   });
 
@@ -22,6 +26,8 @@ class CnicModel {
       cnicNumber: json['cnicNumber'],
       dob: json['dob'],
       expiry: json['expiry'],
+      issueDate: json['issueDate'],
+      gender: json['gender'],
       address: json['address'],
     );
   }
@@ -33,12 +39,14 @@ class CnicModel {
       'cnicNumber': cnicNumber,
       'dob': dob,
       'expiry': expiry,
+      'issueDate': issueDate,
+      'gender': gender,
       'address': address,
     };
   }
 
   @override
   String toString() {
-    return 'CnicModel(name: $name, fatherName: $fatherName, cnicNumber: $cnicNumber, dob: $dob, expiry: $expiry, address: $address)';
+    return 'CnicModel(name: $name, fatherName: $fatherName, cnicNumber: $cnicNumber, dob: $dob, expiry: $expiry, issueDate: $issueDate, gender: $gender, address: $address)';
   }
 }
