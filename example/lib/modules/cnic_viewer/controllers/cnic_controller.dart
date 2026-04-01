@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:id_ocr/id_ocr.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CnicController extends GetxController {
   final ScannerService _scannerService = ScannerService();
@@ -49,7 +50,18 @@ class CnicController extends GetxController {
   }
 
   Future<bool> _processStep({required bool isFront}) async {
-    final path = await _scannerService.scanDocument();
+    String? path = await _scannerService.scanDocument();
+    
+    // Fallback to ImagePicker if scanner fails or returns null
+    if (path == null) {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 100,
+      );
+      path = image?.path;
+    }
+
     if (path == null) return false;
 
     // Set to extracting state
@@ -85,6 +97,35 @@ class CnicController extends GetxController {
     frontImagePath.value = '';
     backImagePath.value = '';
     cnicModel.value = CnicModel();
+  }
+
+  Future<void> processManualImage({required String path, required bool isFront}) async {
+    // Set to extracting state
+    scanStep.value = isFront ? 2 : 4;
+    isLoading.value = true;
+
+    try {
+      if (isFront) {
+        frontImagePath.value = path;
+      } else {
+        backImagePath.value = path;
+      }
+
+      final extractedData = await _ocrService.processImage(
+        path,
+        isFront: isFront,
+      );
+      _updateModel(extractedData);
+      
+      // If we just scanned the front manually, we stay on that screen or go to back?
+      // For manual, let's just show results after one scan or keep step 5 if we want.
+      scanStep.value = 5; 
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to process image: $e');
+      scanStep.value = 0;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void _updateModel(CnicModel newData) {

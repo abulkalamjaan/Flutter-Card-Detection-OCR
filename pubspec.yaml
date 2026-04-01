@@ -1,6 +1,6 @@
 name: id_ocr
 description: "A robust Flutter plugin for CNIC (Computerized National Identity Card) OCR with specialized support for Urdu and Sindhi scripts using Google ML Kit and Tesseract."
-version: 0.1.1
+version: 0.1.2
 homepage: https://github.com/abulkalamjaan/Flutter-Card-Detection-OCR
 repository: https://github.com/abulkalamjaan/Flutter-Card-Detection-OCR
 
