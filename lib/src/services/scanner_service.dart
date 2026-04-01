@@ -1,10 +1,9 @@
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
+import 'package:flutter/foundation.dart';
 
 class ScannerService {
-  late DocumentScanner _documentScanner;
-
-  ScannerService() {
-    _documentScanner = DocumentScanner(
+  Future<String?> scanDocument() async {
+    final documentScanner = DocumentScanner(
       options: DocumentScannerOptions(
         documentFormats: {DocumentFormat.jpeg},
         mode: ScannerMode.base,
@@ -12,22 +11,22 @@ class ScannerService {
         pageLimit: 1,
       ),
     );
-  }
 
-  Future<String?> scanDocument() async {
     try {
-      final result = await _documentScanner.scanDocument();
+      final result = await documentScanner.scanDocument();
       final images = result.images;
       if (images != null && images.isNotEmpty) {
         return images.first;
       }
     } catch (e) {
-      // Handle error
+      debugPrint('Scanner error: $e');
+    } finally {
+      documentScanner.close();
     }
     return null;
   }
 
   void dispose() {
-    _documentScanner.close();
+    // No longer holding a long-lived instance
   }
 }

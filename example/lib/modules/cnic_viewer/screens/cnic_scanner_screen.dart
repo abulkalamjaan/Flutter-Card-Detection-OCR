@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../controllers/cnic_controller.dart';
 import '../widgets/shimmer_widget.dart';
 
@@ -26,16 +27,16 @@ class CnicScannerScreen extends StatelessWidget {
       body: Obx(() {
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
-          child: _buildCurrentStep(),
+          child: _buildCurrentStep(context),
         );
       }),
     );
   }
 
-  Widget _buildCurrentStep() {
+  Widget _buildCurrentStep(BuildContext context) {
     switch (controller.scanStep.value) {
       case 0:
-        return _buildStartView();
+        return _buildStartView(context);
       case 1:
         return _buildInstructionView(isFront: true);
       case 2:
@@ -47,11 +48,11 @@ class CnicScannerScreen extends StatelessWidget {
       case 5:
         return _buildResultView();
       default:
-        return _buildStartView();
+        return _buildStartView(context);
     }
   }
 
-  Widget _buildStartView() {
+  Widget _buildStartView(BuildContext context) {
     return Center(
       key: const ValueKey('start'),
       child: Column(
@@ -84,9 +85,75 @@ class CnicScannerScreen extends StatelessWidget {
             ),
             child: const Text('Start Scanning', style: TextStyle(fontSize: 18)),
           ),
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: () => _showManualScanSource(context),
+            icon: const Icon(Icons.camera_alt),
+            label: const Text('Still having issues? Try Manual Capture'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[700],
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void _showManualScanSource(BuildContext context) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Manual Capture',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Front Photo'),
+              onTap: () {
+                Get.back();
+                _processManualImage(isFront: true);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Back Photo'),
+              onTap: () {
+                Get.back();
+                _processManualImage(isFront: false);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Get.back();
+                _processManualImage(isFront: true, isGallery: true);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _processManualImage({required bool isFront, bool isGallery = false}) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: isGallery ? ImageSource.gallery : ImageSource.camera,
+    );
+    
+    if (image != null) {
+      controller.processManualImage(path: image.path, isFront: isFront);
+    }
   }
 
   Widget _buildInstructionView({required bool isFront}) {
