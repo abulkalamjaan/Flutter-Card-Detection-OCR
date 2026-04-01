@@ -16,6 +16,10 @@ This plugin combines the power of **Google ML Kit** for fast document detection 
   - Extracts Name, Father's Name, CNIC Number, and Date of Birth.
   - Supports **Gender** extraction with normalization (`M`/`F`, `Male`/`Female`, Urdu/Sindhi words).
   - Handles **Date of Issue** and **Date of Expiry** with specialized labels (e.g., "Valid Upto").
+- **Reliability Features**:
+  - Memory-optimized scanner management to prevent native Android crashes (`SIG 9`).
+  - Automatic `image_picker` fallback if the native scanner activity fails.
+  - Optional Manual Capture mode for full control over image sources.
 - **Customizable UI Flow**: Easy-to-integrate services that can fit any design language.
 - **Micro-Animations**: Built-in support for scanning animations and loaders.
 
