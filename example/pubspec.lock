@@ -65,6 +65,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.7"
+  cupertino_icons:
+    dependency: "direct main"
+    description:
+      name: cupertino_icons
+      sha256: ba631d1c7f7bef6b729a622b7b752645a2d076dba9976925b8f25725a30e1ee6
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.8"
   fake_async:
     dependency: transitive
     description:
@@ -152,6 +160,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  get:
+    dependency: "direct main"
+    description:
+      name: get
+      sha256: "5ed34a7925b85336e15d472cc4cfe7d9ebf4ab8e8b9f688585bf6b50f4c3d79a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.7.3"
   glob:
     dependency: transitive
     description:
@@ -169,7 +185,7 @@ packages:
     source: hosted
     version: "0.9.0"
   google_mlkit_document_scanner:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: google_mlkit_document_scanner
       sha256: a4f0266255eeca3b98bd00b00153661f159c27ff6102de963a1155e25c8fc77d
@@ -177,7 +193,7 @@ packages:
     source: hosted
     version: "0.4.1"
   google_mlkit_text_recognition:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: google_mlkit_text_recognition
       sha256: e7609cec8de3022680a36ead8a8bafa9fd2360ea018a728feaad12dcb0e3c177
@@ -208,8 +224,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
-  image_picker:
+  id_ocr:
     dependency: "direct main"
+    description:
+      path: ".."
+      relative: true
+    source: path
+    version: "0.1.0"
+  image_picker:
+    dependency: transitive
     description:
       name: image_picker
       sha256: "784210112be18ea55f69d7076e2c656a4e24949fa9e76429fe53af0c0f4fa320"
@@ -348,10 +371,10 @@ packages:
     dependency: transitive
     description:
       name: native_toolchain_c
-      sha256: "92b2ca62c8bd2b8d2f267cdfccf9bfbdb7322f778f8f91b3ce5b5cda23a3899f"
+      sha256: "6ba77bb18063eebe9de401f5e6437e95e1438af0a87a3a39084fbd37c90df572"
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.5"
+    version: "0.17.6"
   objective_c:
     dependency: transitive
     description:
@@ -361,7 +384,7 @@ packages:
     source: hosted
     version: "9.3.0"
   path:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: path
       sha256: "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
@@ -369,7 +392,7 @@ packages:
     source: hosted
     version: "1.9.1"
   path_provider:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: path_provider
       sha256: "50c5dd5b6e1aaf6fb3a78b33f6aa3afca52bf903a8a5298f53101fdaee55bbcd"
@@ -486,7 +509,7 @@ packages:
     source: hosted
     version: "1.2.2"
   tesseract_ocr:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: tesseract_ocr
       sha256: "75577a824eb2fe1fd1043337118a88fa20a2b5cf772a212ddd37c176faf34f68"
