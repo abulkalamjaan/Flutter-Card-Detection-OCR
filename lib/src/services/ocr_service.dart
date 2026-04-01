@@ -72,6 +72,8 @@ class OcrService {
         model.cnicNumber ??= tesseractModel.cnicNumber;
         model.dob ??= tesseractModel.dob;
         model.expiry ??= tesseractModel.expiry;
+        model.issueDate ??= tesseractModel.issueDate;
+        model.gender ??= tesseractModel.gender;
 
         debugPrint(
           'DEBUG: Merged Model: ${model.cnicNumber}, ${model.name}, ${model.dob}',
@@ -171,7 +173,25 @@ class OcrService {
       'شور كانام', //Husband Name (Urdu),
       'والد کا نام', //Father Name (Urdu),
     ];
-    debugPrint("DATA: $lines");
+    // Labels for Gender and Issue Date
+    final genderLabels = ['gender', 'sex', 'جنس'];
+    final issueLabels = [
+      'date of issue',
+      'issue date',
+      'تاریخ اجراء',
+      'جاري ڪيل تاريخ'
+    ];
+    final expiryLabels = [
+      'expiry',
+      'expiry date',
+      'valid upto',
+      'تاریخ تنسیخ',
+      'ختم ٿيڻ جي تاريخ',
+      'تِخْ', // OCR noise for urdu expiry
+      'ختم'
+    ];
+
+    print("DATA: $lines");
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i].toLowerCase();
 
@@ -196,13 +216,56 @@ class OcrService {
         } else if (i + 1 < lines.length && dateRegex.hasMatch(lines[i + 1])) {
           model.dob = dateRegex.stringMatch(lines[i + 1]);
         }
-      } else if (line.contains('expiry') ||
-          line.contains('تِخْ') ||
-          line.contains('ختم')) {
-        if (dateRegex.hasMatch(lines[i])) {
-          model.expiry = dateRegex.stringMatch(lines[i]);
-        } else if (i + 1 < lines.length && dateRegex.hasMatch(lines[i + 1])) {
-          model.expiry = dateRegex.stringMatch(lines[i + 1]);
+      }
+
+      for (var label in issueLabels) {
+        if (line.contains(label)) {
+          if (dateRegex.hasMatch(lines[i])) {
+            model.issueDate = dateRegex.stringMatch(lines[i]);
+          } else if (i + 1 < lines.length &&
+              dateRegex.hasMatch(lines[i + 1])) {
+            model.issueDate = dateRegex.stringMatch(lines[i + 1]);
+          }
+          break;
+        }
+      }
+
+      for (var label in expiryLabels) {
+        if (line.contains(label)) {
+          if (dateRegex.hasMatch(lines[i])) {
+            model.expiry = dateRegex.stringMatch(lines[i]);
+          } else if (i + 1 < lines.length &&
+              dateRegex.hasMatch(lines[i + 1])) {
+            model.expiry = dateRegex.stringMatch(lines[i + 1]);
+          }
+          break;
+        }
+      }
+
+      // Extract Gender
+      for (var label in genderLabels) {
+        if (line.contains(label)) {
+          String extracted = lines[i]
+              .substring(lines[i].toLowerCase().indexOf(label) + label.length)
+              .replaceAll(':', '')
+              .trim();
+          if (extracted.isEmpty && i + 1 < lines.length) {
+            extracted = lines[i + 1].trim();
+          }
+
+          if (extracted.isNotEmpty) {
+            final lower = extracted.toLowerCase();
+            if (lower.startsWith('m') || lower.contains('مرد')) {
+              model.gender = 'Male';
+            } else if (lower.startsWith('f') ||
+                lower.contains('عورت') ||
+                lower.contains('مائی')) {
+              model.gender = 'Female';
+            } else {
+              model.gender = extracted;
+            }
+          }
+          break;
         }
       }
 
@@ -244,10 +307,13 @@ class OcrService {
         .where((l) => dateRegex.hasMatch(l))
         .map((l) => dateRegex.stringMatch(l)!)
         .toList();
-    if (dates.length >= 2) {
+    if (dates.length >= 3) {
       model.dob ??= dates[0];
-      model.expiry ??=
-          dates[dates.length - 1]; // Usually the last date is expiry
+      model.issueDate ??= dates[1];
+      model.expiry ??= dates[2];
+    } else if (dates.length == 2) {
+      model.dob ??= dates[0];
+      model.expiry ??= dates[1];
     }
 
     return model;
@@ -271,9 +337,50 @@ class OcrService {
     bool capturingAddress = false;
     List<String> addressLines = [];
 
+    final issueLabels = [
+      'date of issue',
+      'issue date',
+      'تاریخ اجراء',
+      'جاري ڪيل تاريخ'
+    ];
+
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i].trim();
       String lowerLine = line.toLowerCase();
+
+      // Check for dates on back
+      for (var label in issueLabels) {
+        if (lowerLine.contains(label)) {
+          if (dateRegex.hasMatch(lines[i])) {
+            model.issueDate ??= dateRegex.stringMatch(lines[i]);
+          } else if (i + 1 < lines.length &&
+              dateRegex.hasMatch(lines[i + 1])) {
+            model.issueDate ??= dateRegex.stringMatch(lines[i + 1]);
+          }
+          break;
+        }
+      }
+      
+      // Check for expiry labels on back
+      final expiryLabels = [
+        'expiry',
+        'expiry date',
+        'valid upto',
+        'تاریخ تنسیخ',
+        'ختم ٿيڻ جي تاريخ',
+        'ختم'
+      ];
+      for (var label in expiryLabels) {
+        if (lowerLine.contains(label)) {
+          if (dateRegex.hasMatch(lines[i])) {
+            model.expiry ??= dateRegex.stringMatch(lines[i]);
+          } else if (i + 1 < lines.length &&
+              dateRegex.hasMatch(lines[i + 1])) {
+            model.expiry ??= dateRegex.stringMatch(lines[i + 1]);
+          }
+          break;
+        }
+      }
 
       // Check for address labels
       bool foundLabel = false;

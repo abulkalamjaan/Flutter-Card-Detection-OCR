@@ -192,9 +192,19 @@ class CnicScannerScreen extends StatelessWidget {
           (v) => controller.updateField('cnicNumber', v),
         ),
         _buildTextField(
+          'Gender',
+          model.gender ?? '',
+          (v) => controller.updateField('gender', v),
+        ),
+        _buildTextField(
           'Date of Birth',
           model.dob ?? '',
           (v) => controller.updateField('dob', v),
+        ),
+        _buildTextField(
+          'Date of Issue',
+          model.issueDate ?? '',
+          (v) => controller.updateField('issueDate', v),
         ),
         _buildTextField(
           'Date of Expiry',

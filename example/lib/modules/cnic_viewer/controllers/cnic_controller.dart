@@ -94,6 +94,8 @@ class CnicController extends GetxController {
       if (newData.cnicNumber != null) val?.cnicNumber = newData.cnicNumber;
       if (newData.dob != null) val?.dob = newData.dob;
       if (newData.expiry != null) val?.expiry = newData.expiry;
+      if (newData.issueDate != null) val?.issueDate = newData.issueDate;
+      if (newData.gender != null) val?.gender = newData.gender;
       if (newData.address != null) val?.address = newData.address;
     });
   }
@@ -115,6 +117,12 @@ class CnicController extends GetxController {
           break;
         case 'expiry':
           val?.expiry = value;
+          break;
+        case 'issueDate':
+          val?.issueDate = value;
+          break;
+        case 'gender':
+          val?.gender = value;
           break;
         case 'address':
           val?.address = value;
