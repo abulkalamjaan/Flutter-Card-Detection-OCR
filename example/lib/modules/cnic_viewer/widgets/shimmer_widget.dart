@@ -117,7 +117,7 @@ class _LaserScannerAnimationState extends State<LaserScannerAnimation>
               height: widget.height,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: Colors.indigo.withOpacity(0.3),
+                  color: Colors.indigo.withAlpha(76), // 0.3 * 255
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -131,16 +131,16 @@ class _LaserScannerAnimationState extends State<LaserScannerAnimation>
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.indigo.withOpacity(0.6),
+                      color: Colors.indigo.withAlpha(153), // 0.6 * 255
                       blurRadius: 10,
                       spreadRadius: 2,
                     ),
                   ],
                   gradient: LinearGradient(
                     colors: [
-                      Colors.indigo.withOpacity(0.0),
+                      Colors.indigo.withAlpha(0),
                       Colors.indigo,
-                      Colors.indigo.withOpacity(0.0),
+                      Colors.indigo.withAlpha(0),
                     ],
                   ),
                 ),
@@ -173,7 +173,7 @@ class InstructionAnimation extends StatelessWidget {
             Icon(
               isFront ? Icons.camera_front : Icons.camera_rear,
               size: 64,
-              color: Colors.indigo.withOpacity(0.5),
+              color: Colors.indigo.withAlpha(127), // 0.5 * 255
             ),
             Positioned(
               bottom: 12,
@@ -183,7 +183,7 @@ class InstructionAnimation extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withAlpha(204), // 0.8 * 255
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:tesseract_ocr/tesseract_ocr.dart';
 import 'package:tesseract_ocr/ocr_engine_config.dart';
@@ -33,7 +34,7 @@ class OcrService {
     }
 
     if (needsFallback) {
-      print(
+      debugPrint(
         'Notice: Fields missing, falling back to Tesseract OCR for Urdu/Sindhi support...',
       );
       try {
@@ -49,7 +50,7 @@ class OcrService {
             .where((e) => e.isNotEmpty)
             .toList();
 
-        print('DEBUG: Tesseract raw lines: $tesseractLines');
+        debugPrint('DEBUG: Tesseract raw lines: $tesseractLines');
 
         final tesseractModel = isFront
             ? _extractFrontData(tesseractLines)
@@ -72,11 +73,11 @@ class OcrService {
         model.dob ??= tesseractModel.dob;
         model.expiry ??= tesseractModel.expiry;
 
-        print(
+        debugPrint(
           'DEBUG: Merged Model: ${model.cnicNumber}, ${model.name}, ${model.dob}',
         );
       } catch (e) {
-        print('Error: Tesseract fallback failed: $e');
+        debugPrint('Error: Tesseract fallback failed: $e');
       }
     }
 
@@ -102,7 +103,7 @@ class OcrService {
     );
 
     int dateCount = 0;
-    print('OCR lines detected: $lines');
+    debugPrint('OCR lines detected: $lines');
 
     for (String line in lines) {
       if (dateRegex.hasMatch(line)) dateCount++;
@@ -113,29 +114,29 @@ class OcrService {
           line.toLowerCase().contains('ولدیت') ||
           line.toLowerCase().contains('date of birth') ||
           line.toLowerCase().contains('تاریخ پیدائش')) {
-        print('Front side detected by keyword: $line');
+        debugPrint('Front side detected by keyword: $line');
         return true;
       }
     }
 
-    print('Date count: $dateCount');
+    debugPrint('Date count: $dateCount');
 
     // Robust heuristic: 2 or more dates strongly suggest the back side (Issue & Expiry)
     // unless front keywords were already found.
     if (dateCount >= 2) {
-      print('Back side suspected due to date count: $dateCount');
+      debugPrint('Back side suspected due to date count: $dateCount');
       return false;
     }
 
     // Check for CNIC number
     for (String line in lines) {
       if (cnicRegex.hasMatch(line)) {
-        print('Front side suspected due to CNIC presence and low date count');
+        debugPrint('Front side suspected due to CNIC presence and low date count');
         return true;
       }
     }
 
-    print('Side detection inconclusive, defaulting to false (Back)');
+    debugPrint('Side detection inconclusive, defaulting to false (Back)');
     return false;
   }
 
@@ -170,7 +171,7 @@ class OcrService {
       'شور كانام', //Husband Name (Urdu),
       'والد کا نام', //Father Name (Urdu),
     ];
-    print("DATA: $lines");
+    debugPrint("DATA: $lines");
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i].toLowerCase();
 

@@ -1,53 +1,116 @@
-## The Master Blueprint: CNIC OCR System
+# id_ocr
 
-# Phase 1: Project Setup & Dependencies
+A robust and versatile Flutter plugin for **CNIC (Computerized National Identity Card)** detection and OCR, with specialized support for **Urdu** and **Sindhi** scripts.
 
-# Goal: Initialize the Flutter environment and add necessary plugins.
+This plugin combines the power of **Google ML Kit** for fast document detection and standard text recognition (English/Numeric) with **Tesseract OCR** as a fallback for complex Urdu and Sindhi scripts.
 
-# Action: Add google_mlkit_text_recognition, google_mlkit_document_scanner, and image_picker to pubspec.yaml.
+---
 
-# Action: Configure iOS Info.plist and Android AndroidManifest.xml for Camera and Gallery permissions.
+## ✨ Features
 
-# Phase 2: The Document Scanning Engine
+- **Guided Card Scanning**: Automatic document cropping and perspective correction using `google_mlkit_document_scanner`.
+- **Hybrid OCR Engine**:
+  - **Google ML Kit**: High-speed extraction for English names, CNIC numbers, and dates.
+  - **Tesseract fallback**: Specialized support for Urdu and Sindhi script extraction (names, addresses).
+- **Comprehensive Data Model**: Extracts and maps data to a structured `CnicModel` (Name, Father's Name, CNIC Number, Date of Birth, Expiry Date, and Address).
+- **Customizable UI Flow**: Easy-to-integrate services that can fit any design language.
+- **Micro-Animations**: Built-in support for scanning animations and loaders.
 
-# Goal: Create a reliable UI to capture the Front and Back images.
+---
 
-# Logic: Use DocumentScanner to ensure the image is cropped and the perspective is corrected (top-down view).
+## 🚀 Getting Started
 
-# Workflow:
+### 1. Add Dependency
 
-# User clicks "Scan Front".
+Add this to your package's `pubspec.yaml` file:
 
-# Scanner returns a cropped .jpg.
+```yaml
+dependencies:
+  id_ocr: ^0.1.0
+```
 
-# User clicks "Scan Back".
+### 2. Platform Setup
 
-# Scanner returns a second .jpg.
+#### Android
+Update your `android/app/build.gradle`:
+- `minSdkVersion` should be at least **21**.
 
-# Phase 3: The Text Extraction Logic (The "Brain")
+Add permissions to `AndroidManifest.xml`:
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+```
 
-# Goal: Process the images and map the strings to a data model.
+#### iOS
+Add the following to your `ios/Runner/Info.plist`:
+```xml
+<key>NSCameraUsageDescription</key>
+<string>We need access to your camera to scan the CNIC.</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>We need access to your gallery to upload the CNIC image.</string>
+```
 
-# Data Model: Create a CnicModel class with fields: name, fatherName, cnicNumber, dob, expiry, and address.
+---
 
-# Regex Extraction Strategy:
+## 🛠 Usage
 
-# CNIC: r"\d{5}-\d{7}-\d{1}"
+Integrating `id_ocr` is straightforward. You can use the `ScannerService` for capturing images and `OcrService` for processing them.
 
-Dates (DOB/Expiry): r"\d{2}.\d{2}.\d{4}"
+### Simple Example
 
-Keywords: Search for "Name", "Father Name", and "Address". Since the name is usually below the label "Name", the logic should find the index of the label and grab the string at index + 1.
+```dart
+import 'package:id_ocr/id_ocr.dart';
 
-Phase 4: Address Processing (The Back Side)
+// 1. Initialize services
+final ScannerService _scannerService = ScannerService();
+final OcrService _ocrService = OcrService();
 
-Goal: Specific logic for the more complex back side of the card.
+// 2. Scan and Process
+Future<void> scanAndExtract() async {
+  // Capture image using document scanner
+  final String? path = await _scannerService.scanDocument();
+  
+  if (path != null) {
+    // Process the image for the front side
+    CnicModel extractedData = await _ocrService.processImage(path, isFront: true);
+    
+    print('Name: ${extractedData.name}');
+    print('CNIC: ${extractedData.cnicNumber}');
+  }
+}
+```
 
-Logic: The address is usually the largest block of text. Use a loop to collect all lines after the keyword "Address" until a date or the bottom margin is reached.
+### Data Model
 
-Phase 5: User Verification UI
+The `CnicModel` contains the following fields:
+- `name`: Full name of the individual.
+- `fatherName`: Father's or Husband's name.
+- `cnicNumber`: 13-digit identity number.
+- `dob`: Date of Birth.
+- `expiry`: Card expiry date.
+- `address`: Residential address (typically from the back side).
 
-Goal: Allow the user to edit any OCR mistakes.
+---
 
-Action: Create a form pre-populated with the extracted data.
+## 🏗 Built-in UI (Example App)
 
-Validation: Ensure the CNIC number has exactly 13 digits and dates are in the past (DOB) or future (Expiry).
+The plugin comes with a complete implementation example using **GetX** that showcases a guided step-by-step scanning flow. Check the `example` folder for details.
+
+---
+
+## 📜 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open issues or submit pull requests to improve the OCR accuracy or add new features.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
