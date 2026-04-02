@@ -1,3 +1,9 @@
+## 0.1.3
+
+* **Fixed Native Crash**: Added `PlatformException` handling for the "No cropped images returned" error in the document scanner, preventing app termination in integrated projects.
+* **Internal Fallback**: Moved the `image_picker` fallback logic from the example app directly into `ScannerService` for better out-of-the-box stability.
+* **Integration Documentation**: Added a critical guide for Android `MainActivity` setup and dependency conflict resolution.
+
 ## 0.1.2
 
 * **Fixed Android Crash (SIG 9)**: Resolved native process termination in `internalDispatchActivityResult` by optimizing resource management in the `ScannerService`.
@@ -6,8 +12,7 @@
   * Added support for Date of Issue.
   * Improved Expiry Date extraction with more robust label detection (e.g., "Valid Upto").
 * **Fallback Mechanisms**: 
-  * Added automatic `image_picker` fallback if the Document Scanner fails.
-  * Added Manual Capture UI in the sample app for maximum stability.
+  * Preliminary support for manual capture in the sample app.
 
 ## 0.1.1
 
