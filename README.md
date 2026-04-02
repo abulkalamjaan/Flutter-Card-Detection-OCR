@@ -49,6 +49,12 @@ Add permissions to `AndroidManifest.xml`:
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 ```
 
+### 3. Critical: Android Integration Tips
+To avoid common crashes during integration (like `No cropped images returned` or `SIG 9`), ensure the following:
+- **Clean MainActivity**: In `android/app/src/main/kotlin/.../MainActivity.kt`, the class should simply extend `FlutterActivity()`. Avoid custom `onActivityResult` overrides unless they call `super`.
+- **No Conflicting Plugins**: Do not use `cunning_document_scanner` alongside `id_ocr`, as they conflict during the Activity Result delivery.
+- **Hardware Acceleration**: Ensure `android:hardwareAccelerated="true"` is set (default in Flutter) to allow ML Kit to process images.
+
 #### iOS
 Add the following to your `ios/Runner/Info.plist`:
 ```xml
@@ -102,9 +108,38 @@ The `CnicModel` contains the following fields:
 
 ---
 
-## 🏗 Built-in UI (Example App)
+## 🏗 Guided Scan & Extraction Screen
 
-The plugin comes with a complete implementation example using **GetX** that showcases a guided step-by-step scanning flow. Check the `example` folder for details.
+The plugin is designed to support a seamless **"Guided Scan"** experience similar to the one in the example app:
+1. **Instruction**: Show a screen explaining what to scan (Front/Back).
+2. **Scanner**: Call `ScannerService.scanDocument()`.
+3. **Extraction View**: Immediately after the scanner returns, update your UI to show a loader (e.g., "Extracting Details...") while calling `OcrService.processImage()`.
+4. **Repeat**: Repeat for the back side if necessary.
+
+```dart
+// Example of the Guided Flow
+void onScanTapped() async {
+  setState(() => isExtracting = false);
+  
+  // 1. Scan Front
+  final path = await _scannerService.scanDocument();
+  if (path == null) return;
+  
+  // 2. Show Extraction UI
+  setState(() => isExtracting = true);
+  
+  // 3. Process OCR
+  final data = await _ocrService.processImage(path, isFront: true);
+  
+  // 4. Update UI
+  setState(() {
+    extractedData = data;
+    isExtracting = false;
+  });
+}
+```
+
+Check the `example` folder for a full implementation using **GetX** and custom animations.
 
 ---
 
