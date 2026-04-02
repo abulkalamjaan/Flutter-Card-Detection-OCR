@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'package:id_ocr/id_ocr.dart';
-import 'package:image_picker/image_picker.dart';
 
 class CnicController extends GetxController {
   final ScannerService _scannerService = ScannerService();
@@ -52,16 +51,6 @@ class CnicController extends GetxController {
   Future<bool> _processStep({required bool isFront}) async {
     String? path = await _scannerService.scanDocument();
     
-    // Fallback to ImagePicker if scanner fails or returns null
-    if (path == null) {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 100,
-      );
-      path = image?.path;
-    }
-
     if (path == null) return false;
 
     // Set to extracting state
